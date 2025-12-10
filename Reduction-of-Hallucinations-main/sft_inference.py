@@ -1,0 +1,288 @@
+"""
+SFT Model Inference
+===================
+
+Generate medical summaries using the Stage A fine-tuned model.
+
+Usage:
+    python sft_inference.py \
+        --model_path "./models/sft_specialist/final_model" \
+        --clinical_note "Patient reports fever of 38.5°C and cough. Tested positive for influenza A."
+"""
+
+import torch
+import argparse
+import logging
+from pathlib import Path
+from typing import Optional, Dict, List
+from peft import AutoPeftModelForCausalLM
+from transformers import AutoTokenizer
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class SFTInference:
+    """
+    Inference wrapper for fine-tuned SFT models.
+    """
+    
+    def __init__(
+        self,
+        model_path: str,
+        device: str = "cuda",
+        torch_dtype: str = "float16",
+        use_8bit: bool = False,
+    ):
+        """
+        Initialize inference engine.
+        
+        Args:
+            model_path: Path to the fine-tuned model
+            device: Device to use (cuda or cpu)
+            torch_dtype: Data type for model (float16, bfloat16, float32)
+            use_8bit: Whether to use 8-bit quantization
+        """
+        self.device = torch.device(device)
+        self.torch_dtype = getattr(torch, torch_dtype.replace("torch.", ""))
+        
+        logger.info(f"Loading model from {model_path}")
+        logger.info(f"Using device: {self.device}")
+        
+        # Load tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+        
+        # Load model - supports both LoRA-adapted and merged models
+        try:
+            # Try loading as LoRA model first
+            self.model = AutoPeftModelForCausalLM.from_pretrained(
+                model_path,
+                torch_dtype=self.torch_dtype,
+                device_map=self.device,
+                load_in_8bit=use_8bit,
+            )
+            logger.info("Loaded as LoRA model")
+        except Exception as e:
+            logger.warning(f"Failed to load as LoRA model: {e}")
+            logger.info("Attempting to load as regular model...")
+            
+            from transformers import AutoModelForCausalLM
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_path,
+                torch_dtype=self.torch_dtype,
+                device_map=self.device,
+                load_in_8bit=use_8bit,
+            )
+            logger.info("Loaded as regular model")
+        
+        self.model.eval()
+        logger.info("Model loaded and set to eval mode")
+    
+    def generate_summary(
+        self,
+        clinical_note: str,
+        max_new_tokens: int = 150,
+        temperature: float = 0.7,
+        top_p: float = 0.9,
+        top_k: int = 50,
+    ) -> Dict[str, str]:
+        """
+        Generate a summary for a clinical note.
+        
+        Args:
+            clinical_note: The clinical note to summarize
+            max_new_tokens: Maximum number of tokens to generate
+            temperature: Sampling temperature (higher = more random)
+            top_p: Nucleus sampling parameter
+            top_k: Top-k sampling parameter
+        
+        Returns:
+            Dictionary with input and generated summary
+        """
+        # Format prompt
+        prompt = f"Clinical Note: {clinical_note}\n\nSummary:"
+        
+        # Tokenize
+        encodings = self.tokenizer(
+            prompt,
+            return_tensors="pt",
+            truncation=True,
+            max_length=512,
+        ).to(self.device)
+        
+        logger.info(f"Input tokens: {encodings['input_ids'].shape[1]}")
+        
+        # Generate
+        with torch.no_grad():
+            outputs = self.model.generate(
+                input_ids=encodings['input_ids'],
+                attention_mask=encodings['attention_mask'],
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                top_k=top_k,
+                do_sample=True,
+                eos_token_id=self.tokenizer.eos_token_id,
+                pad_token_id=self.tokenizer.pad_token_id,
+            )
+        
+        # Decode
+        generated_text = self.tokenizer.decode(
+            outputs[0],
+            skip_special_tokens=True
+        )
+        
+        # Extract summary (remove prompt)
+        summary = generated_text.replace(prompt, "").strip()
+        
+        return {
+            "clinical_note": clinical_note,
+            "prompt": prompt,
+            "generated_summary": summary,
+            "full_output": generated_text,
+        }
+    
+    def batch_generate(
+        self,
+        clinical_notes: List[str],
+        max_new_tokens: int = 150,
+        temperature: float = 0.7,
+    ) -> List[Dict[str, str]]:
+        """
+        Generate summaries for multiple clinical notes.
+        
+        Args:
+            clinical_notes: List of clinical notes
+            max_new_tokens: Maximum tokens per generation
+            temperature: Sampling temperature
+        
+        Returns:
+            List of results
+        """
+        results = []
+        for note in clinical_notes:
+            result = self.generate_summary(
+                note,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+            )
+            results.append(result)
+        
+        return results
+
+
+def main():
+    """Main inference function."""
+    parser = argparse.ArgumentParser(description="SFT Model Inference")
+    
+    parser.add_argument(
+        "--model_path",
+        required=True,
+        help="Path to the fine-tuned model"
+    )
+    parser.add_argument(
+        "--clinical_note",
+        type=str,
+        help="Clinical note to summarize"
+    )
+    parser.add_argument(
+        "--input_file",
+        type=str,
+        help="Path to file with clinical notes (one per line)"
+    )
+    parser.add_argument(
+        "--max_tokens",
+        type=int,
+        default=150,
+        help="Maximum tokens to generate"
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.7,
+        help="Sampling temperature"
+    )
+    parser.add_argument(
+        "--device",
+        default="cuda",
+        help="Device to use (cuda or cpu)"
+    )
+    parser.add_argument(
+        "--use_8bit",
+        action="store_true",
+        help="Use 8-bit quantization"
+    )
+    
+    args = parser.parse_args()
+    
+    # Initialize inference
+    inference = SFTInference(
+        model_path=args.model_path,
+        device=args.device,
+        use_8bit=args.use_8bit,
+    )
+    
+    # Generate summaries
+    if args.clinical_note:
+        logger.info(f"Generating summary for clinical note...")
+        result = inference.generate_summary(
+            args.clinical_note,
+            max_new_tokens=args.max_tokens,
+            temperature=args.temperature,
+        )
+        
+        print(f"\n{'='*60}")
+        print(f"Clinical Note:\n{result['clinical_note']}")
+        print(f"\n{'-'*60}")
+        print(f"Generated Summary:\n{result['generated_summary']}")
+        print(f"{'='*60}\n")
+        
+    elif args.input_file:
+        logger.info(f"Reading clinical notes from {args.input_file}")
+        with open(args.input_file, 'r') as f:
+            notes = [line.strip() for line in f if line.strip()]
+        
+        logger.info(f"Generating summaries for {len(notes)} notes...")
+        results = inference.batch_generate(notes)
+        
+        for i, result in enumerate(results, 1):
+            print(f"\n{'='*60}")
+            print(f"Example {i}")
+            print(f"Clinical Note:\n{result['clinical_note']}")
+            print(f"\n{'-'*60}")
+            print(f"Generated Summary:\n{result['generated_summary']}")
+            print(f"{'='*60}\n")
+    
+    else:
+        # Interactive mode
+        print("SFT Inference - Interactive Mode")
+        print("Type clinical notes and press Enter twice to generate summaries")
+        print("Type 'quit' to exit\n")
+        
+        while True:
+            print("Enter clinical note (press Enter twice when done):")
+            lines = []
+            while True:
+                line = input()
+                if line == "quit":
+                    return
+                if line == "":
+                    if lines:
+                        break
+                else:
+                    lines.append(line)
+            
+            clinical_note = " ".join(lines)
+            result = inference.generate_summary(
+                clinical_note,
+                max_new_tokens=args.max_tokens,
+                temperature=args.temperature,
+            )
+            
+            print(f"\nGenerated Summary:\n{result['generated_summary']}\n")
+
+
+if __name__ == "__main__":
+    main()

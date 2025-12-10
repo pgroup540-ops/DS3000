@@ -1,0 +1,29 @@
+﻿=============================================================
+MANUAL ASSESSMENT - QUICK START
+=============================================================
+
+You've successfully run Stage A inference on 50 examples!
+
+NEXT STEP: Manually assess the outputs for hallucinations
+
+--> HOW TO START:
+
+    python manual_assessment_tool.py
+
+--> WHAT YOU'LL DO:
+    1. Review each clinical note and generated summary
+    2. Decide: Does it contain hallucinations? (y/n)
+    3. Tool tracks progress and calculates hallucination rate
+
+--> TIME REQUIRED:
+    - 20 examples: ~30 minutes
+    - 50 examples: ~60-90 minutes
+
+--> READ FULL GUIDE:
+    MANUAL_ASSESSMENT_GUIDE.md
+
+--> KEY DECISION:
+    - Hallucination rate < 15%: Deploy Stage A model ✓
+    - Hallucination rate > 15%: Run Stage B (DPO) training
+
+=============================================================

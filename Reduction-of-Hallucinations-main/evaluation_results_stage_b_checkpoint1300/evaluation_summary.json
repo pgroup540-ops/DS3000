@@ -1,0 +1,7 @@
+{
+  "checkpoint": "models/dpo_hallucination_resistant_sequential/checkpoint-1300",
+  "base_model": "models/sft_specialist_fast_fp16/final_model",
+  "num_examples": 50,
+  "factual_count": 20,
+  "hallucinated_count": 30
+}

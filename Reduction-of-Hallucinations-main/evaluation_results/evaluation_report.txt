@@ -1,0 +1,19 @@
+============================================================
+STAGE A MODEL EVALUATION REPORT
+============================================================
+
+Evaluation Date: 2025-11-23T14:27:18.952006
+Total Examples: 1
+Avg Generated Length: 120.0 words
+
+============================================================
+SAMPLE OUTPUTS (First 10)
+============================================================
+
+Example 1:
+Clinical Note:
+Child with mild asthma. Using inhaler once per day. No recent hospitalizations.
+
+Ground Truth:
+
+

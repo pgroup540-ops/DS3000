@@ -1,0 +1,142 @@
+============================================================
+STAGE A MODEL EVALUATION REPORT
+============================================================
+
+Evaluation Date: 2025-11-23T16:13:17.531439
+Total Examples: 50
+Avg Generated Length: 224.5 words
+
+============================================================
+SAMPLE OUTPUTS (First 10)
+============================================================
+
+Example 1:
+Clinical Note:
+An apical cyst does not require any treatment unless it becomes symptomatic.  Pulp fibrosis does not require any treatment unless it becomes symptomatic.
+
+Ground Truth:
+
+
+Generated:
+Apical cysts do not require treatment unless they become symptomatic.
+
+------------------------------------------------------------
+
+Example 2:
+Clinical Note:
+The urea breath test is the investigative method of choice for confirmation of H.pylori eradication.
+
+Ground Truth:
+
+
+Generated:
+Urea breath test (UBT) is the method of choice for confirming the eradication of H pylori after a treatment regimen The UBT is a non-invasive test that is performed by ingesting a small amount of a non-radioactive carbon isotope labeled urea The isotope is metabolized to carbon dioxide by the enzyme urease, which is produced by H pylori A breath sample is taken before and after the ingestion of the labeled urea The carbon dioxide levels in the breath are measured before and after the ingestion of the labeled urea If the levels of carbon dioxide are the same before and after the ingestion, the result is negative, and if the levels of carbon dioxide are higher after the ingestion, the result is positive.
+
+------------------------------------------------------------
+
+Example 3:
+Clinical Note:
+The patient has Arnold-Chiari 1 malformation, extensive cervicothoracic syringomyelia, and double structural thoracic and lumbar scoliosis.
+
+Ground Truth:
+
+
+Generated:
+A 55-year-old male with a history of extensive cervicothoracic syringomyelia, double structural thoracic and lumbar scoliosis and Arnold Chiari 1 malformation presented to our clinic with chronic back pain and bilateral lower extremity weakness (grade 4) and sensory loss.\nHe was a retired farmer and the pain was intermittent in nature He had no significant past medical history except for the chronic back pain which had been present for several years.\nPhysical examination revealed a 50-year-old, thin, male with a height of 180 cm, weight of 73 kg, and BMI of 23.4 He was unable to stand without support and his gait was broad-based and unstable.\nHis lower
+
+------------------------------------------------------------
+
+Example 4:
+Clinical Note:
+Electron beam therapy is used for Kaposi sarcoma.
+
+Ground Truth:
+
+
+Generated:
+Electron beam therapy is used for Kaposi sarcoma.
+
+------------------------------------------------------------
+
+Example 5:
+Clinical Note:
+Insulin acts on tyrosine kinase receptors.
+
+Ground Truth:
+
+
+Generated:
+Tyrosine kinase receptorsThe insulin receptor is a heterotetrameric glycoprotein composed of two alpha and two beta subunits The alpha subunits contain the binding sites for insulin and IGF-1 The beta subunits contain intrinsic tyrosine kinase activity The insulin receptor is found in all tissues, but the IGF-1 receptor is predominantly found in the brain, liver, and muscles The insulin receptor has a high affinity for insulin and IGF-1 The IGF-1 receptor has a lower affinity for insulin, but a higher affinity for IGF-1 The insulin receptor is activated by insulin and IGF-1, which induce the tyrosine phosphorylation of the insulin receptor beta subunit The insulin receptor beta subunit
+
+------------------------------------------------------------
+
+Example 6:
+Clinical Note:
+The severity of mitral stenosis is assessed by the length of the murmur.
+
+Ground Truth:
+
+
+Generated:
+The severity of mitral stenosis is assessed by the length of the murmur.
+
+------------------------------------------------------------
+
+Example 7:
+Clinical Note:
+Blood test result showed a foreign object located but it could not be removed. A 31-year-old man was admitted to our hospital, complaining of hematochezia which had lasted for 1 month. His past history involved a high anterior resection of the rectum in our hospital due to intussusception caused by Peutz-Jeghers polyposis (Fig. ). He was hospitalized for 1 month after the procedure. Unfortunately, details of the surgical procedure that had been performed and the reason for his extended postoperative hospitalization were unknown, because clinical records from his previous admission were not available. He was followed up for 3 years after the procedure, during which he had no abdominal symptoms. He remained symptom-free until the month prior to readmission when he began to suffer from hematochezia. On this admission, hematochezia was his only symptom and there were no abnormal abdominal findings on physical examination. Blood test results, including levels of tumor markers, were all within normal limits. Colonoscopy revealed a hemorrhagic tumor with a smooth surface protruding from the anastomosis of the previous high anterior resection, at a distance of 10 cm from the anal verge; a second examination 4 days later revealed that the tumor had disappeared (Fig. ). The biopsied tumor and other small polyps were histologically diagnosed as adenocarcinoma and hamartomatous polyps, respectively (data not shown). We performed a low anterior resection of the rectum, including the anastomotic site with the adenocarcinoma, combined with a resection of the ileum for strong adhesion. The patient was discharged from our hospital 42 days after the operation.\nGross appearance of the resected rectum showed a defect of the rectal mucosa with a smooth edge and a mucosal bulge located at the anastomotic site (Fig. ). Cut surfaces demonstrated a submucosal tumor mainly occupying the proper muscle layer under the defect (Fig. ). Microscopically, the submucosal tumor comprised an adenocarcinoma and a bone lesion at the anastomotic site (Fig. ). The surface of the tumor was covered with granulation tissue (Fig. ). The bone lesion not only included the carcinomatous glands but also normal glands in the bone tissue (Fig. ). In addition, we identified the incorporation of the normal mucosa in the submucosal fibrosis at the anastomotic site (Fig. f). The blood test result is all within normal limits.
+
+Ground Truth:
+
+
+Generated:
+Clinical Note: Blood test result showed a foreign object located but it could not be removed. A 31-year-old man was admitted to our hospital, complaining of hematochezia which had lasted for 1 month. His past history involved a high anterior resection of the rectum in our hospital due to intussusception caused by Peutz-Jeghers polyposis (Fig. ). He was hospitalized for 1 month after the procedure. Unfortunately, details of the surgical procedure that had been performed and the reason for his extended postoperative hospitalization were unknown, because clinical records from his previous admission were not available. He was followed up for 3 years after the procedure, during which he had no abdominal symptoms. He remained symptom-free until the month prior to readmission when he began to suffer from hematochezia. On this admission, hematochezia was his only symptom and there were no abnormal abdominal findings on physical examination. Blood test results, including levels of tumor markers, were all within normal limits. Colonoscopy revealed a hemorrhagic tumor with a smooth surface protruding from the anastomosis of the previous high anterior resection, at a distance of 10 cm from the anal verge; a second examination 4 days later revealed that the tumor had disappeared (Fig. ). The biopsied tumor and other small polyps were histologically diagnosed as adenocarcinoma and hamartomatous polyps, respectively (data not shown). We performed a low anterior resection of the rectum, including the anastomotic site with the adenocarcinoma, combined with a resection of the ileum for strong adhesion. The patient was discharged from our hospital 42 days after the operation.\nGross appearance of the resected rectum showed a defect of the rectal mucosa with a smooth edge and a mucosal bulge located at the anastomotic site (Fig. ). Cut surfaces demonstrated a submucosal tumor mainly occupying the proper muscle layer under the defect (Fig. ). Microscopically, the submucosal tumor comprised an adenocarcinoma and a bone lesion at the anastomotic site (Fig. ). The surface of the tumor was covered with granulation tissue (Fig. ). The bone lesion not only included the carcinomatous glands but also normal glands in the bone tissue (Fig. ). In addition, we identified the incorporation of the normal mucosa in the submucosal fibrosis at the anastomotic site, which was associated with the bone lesion (Fig. ). The bone lesion was identified as a foreign body reaction to a surgical sponge (data not shown). In the resected ileum, we observed a strong adhesion with the rectal stump, including the bone lesion (Fig. ). Microscopically, we found that the rectal stump was incorporated into the ileum with granulation tissue, and the bone lesion was identified as the foreign body (data not shown). To identify the reason for the extended postoperative hospitalization and the cause of the rectal stump incorporation into the ileum, we reviewed the previous operation report and found that the rectal stump was closed by suturing with a surgical sponge at
+
+------------------------------------------------------------
+
+Example 8:
+Clinical Note:
+Evaluation of the pleural fluid is most likely to show an increased lymphocyte concentration. A 49-year-old man with hypertension comes to the hospital because of 4 days of left-sided chest pain, cough, and fever. The chest pain worsens upon inspiration and coughing. His temperature is 38.5°C (101.3° F), pulse is 110/min, respirations are 29/min. There is dullness to percussion at the left base of the lung. An x-ray of the chest shows blunting of the left costophrenic angle. Evaluation of the pleural fluid is most likely to show a decreased glucose concentration.
+
+Ground Truth:
+
+
+Generated:
+A 49-year-old man with hypertension comes to the hospital because of 4 days of left-sided chest pain, cough, and fever His temperature is 38.5°C (101.3° F), pulse is 110/min, respirations are 29/min There is dullness to percussion at the left base of the lung An x-ray of the chest shows blunting of the left costophrenic angle The statement is factual.
+
+------------------------------------------------------------
+
+Example 9:
+Clinical Note:
+The amount of water lost in stools is 100-200 ml, however, according to the given information, the amount of water lost in stools is 350ml.  The amount of water lost in stools is 200ml.
+
+Ground Truth:
+
+
+Generated:
+The statement is factual.
+
+------------------------------------------------------------
+
+Example 10:
+Clinical Note:
+Na+ Valproate is the preferred drug in generalized tonic-clonic seizure.
+
+Ground Truth:
+
+
+Generated:
+Valproate is the preferred drug for generalized tonic clonic seizures.
+
+------------------------------------------------------------
+
+
+============================================================
+NEXT STEPS:
+============================================================
+1. Review evaluation_results.csv for all outputs
+2. Manually check 20-50 examples for hallucinations
+3. Count hallucinations and calculate rate
+4. Decision:
+   - If hallucination rate <15%: Proceed to deployment
+   - If hallucination rate >15%: Run Stage B (DPO)

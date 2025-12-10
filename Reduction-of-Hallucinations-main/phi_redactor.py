@@ -1,0 +1,247 @@
+"""
+PHI (Protected Health Information) Redaction Module
+Detects and masks PHI for HIPAA compliance.
+"""
+
+import re
+from typing import List, Dict, Tuple
+from datetime import datetime
+import hashlib
+
+
+class PHIRedactor:
+    """Detect and redact PHI from clinical text."""
+    
+    def __init__(self, mask_style: str = "category"):
+        """
+        Initialize the PHI redactor.
+        
+        Args:
+            mask_style: How to mask PHI. Options:
+                - "category": Replace with [CATEGORY] (e.g., [NAME], [DATE])
+                - "hash": Replace with hash of original value
+                - "generic": Replace with generic placeholder (e.g., PATIENT001)
+        """
+        self.mask_style = mask_style
+        self.entity_counters = {
+            "name": 0,
+            "date": 0,
+            "id": 0,
+            "location": 0,
+            "phone": 0,
+            "email": 0,
+            "age": 0,
+        }
+        
+        # Compile regex patterns for PHI detection
+        self.patterns = self._compile_patterns()
+    
+    def _compile_patterns(self) -> Dict[str, re.Pattern]:
+        """Compile regex patterns for detecting PHI."""
+        return {
+            # Dates: Various formats
+            "date": re.compile(
+                r'\b(?:'
+                r'\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|'  # MM/DD/YYYY, DD-MM-YYYY
+                r'\d{4}[-/]\d{1,2}[-/]\d{1,2}|'    # YYYY-MM-DD
+                r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}|'  # Month DD, YYYY
+                r'\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}'     # DD Month YYYY
+                r')\b',
+                re.IGNORECASE
+            ),
+            
+            # Ages over 89 (HIPAA requirement)
+            "age_over_89": re.compile(r'\b(9[0-9]|[1-9]\d{2,})\s*(?:year|yr|y\.o\.|years?)[\s-]*old\b', re.IGNORECASE),
+            
+            # Phone numbers
+            "phone": re.compile(
+                r'\b(?:'
+                r'\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|'  # 123-456-7890
+                r'\(\d{3}\)\s*\d{3}[-.\s]?\d{4}'   # (123) 456-7890
+                r')\b'
+            ),
+            
+            # Email addresses
+            "email": re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'),
+            
+            # Medical Record Numbers (MRN) - common patterns
+            "mrn": re.compile(r'\b(?:MRN|Medical Record|Record #|Patient #|ID)[:\s#]*([A-Z0-9]{6,})\b', re.IGNORECASE),
+            
+            # Social Security Numbers
+            "ssn": re.compile(r'\b\d{3}-\d{2}-\d{4}\b'),
+            
+            # Common name patterns (simplified - in production, use NER)
+            "name_prefix": re.compile(r'\b(?:Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b'),
+            
+            # Street addresses
+            "address": re.compile(r'\b\d+\s+[A-Z][a-z]+\s+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct)\b', re.IGNORECASE),
+            
+            # ZIP codes
+            "zip": re.compile(r'\b\d{5}(?:-\d{4})?\b'),
+            
+            # Common location markers
+            "location": re.compile(r'\b(?:lives in|from|resident of|located at)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b'),
+        }
+    
+    def _generate_mask(self, category: str, original_value: str = "") -> str:
+        """
+        Generate a mask for a PHI entity.
+        
+        Args:
+            category: Type of PHI (e.g., "name", "date")
+            original_value: The original value being masked
+            
+        Returns:
+            Masked string
+        """
+        if self.mask_style == "category":
+            return f"[{category.upper()}]"
+        
+        elif self.mask_style == "hash":
+            hash_val = hashlib.md5(original_value.encode()).hexdigest()[:8]
+            return f"[{category.upper()}_{hash_val}]"
+        
+        elif self.mask_style == "generic":
+            self.entity_counters[category] += 1
+            count = self.entity_counters[category]
+            category_map = {
+                "name": f"PATIENT{count:03d}",
+                "date": f"DATE{count:03d}",
+                "id": f"ID{count:03d}",
+                "location": f"LOCATION{count:03d}",
+                "phone": f"PHONE{count:03d}",
+                "email": f"EMAIL{count:03d}",
+                "age": f"AGE{count:03d}",
+            }
+            return category_map.get(category, f"{category.upper()}{count:03d}")
+        
+        return f"[{category.upper()}]"
+    
+    def redact_dates(self, text: str) -> str:
+        """Redact dates from text."""
+        def replace_date(match):
+            return self._generate_mask("date", match.group(0))
+        
+        return self.patterns["date"].sub(replace_date, text)
+    
+    def redact_ages_over_89(self, text: str) -> str:
+        """Redact ages over 89 per HIPAA requirements."""
+        def replace_age(match):
+            return f">89 years old"  # HIPAA-compliant masking
+        
+        return self.patterns["age_over_89"].sub(replace_age, text)
+    
+    def redact_phone_numbers(self, text: str) -> str:
+        """Redact phone numbers from text."""
+        def replace_phone(match):
+            return self._generate_mask("phone", match.group(0))
+        
+        return self.patterns["phone"].sub(replace_phone, text)
+    
+    def redact_emails(self, text: str) -> str:
+        """Redact email addresses from text."""
+        def replace_email(match):
+            return self._generate_mask("email", match.group(0))
+        
+        return self.patterns["email"].sub(replace_email, text)
+    
+    def redact_identifiers(self, text: str) -> str:
+        """Redact medical record numbers and SSNs."""
+        def replace_mrn(match):
+            return f"{match.group(0).split()[0]} {self._generate_mask('id', match.group(1))}"
+        
+        def replace_ssn(match):
+            return self._generate_mask("id", match.group(0))
+        
+        text = self.patterns["mrn"].sub(replace_mrn, text)
+        text = self.patterns["ssn"].sub(replace_ssn, text)
+        return text
+    
+    def redact_names(self, text: str) -> str:
+        """Redact names with titles from text (simplified approach)."""
+        def replace_name(match):
+            return self._generate_mask("name", match.group(0))
+        
+        return self.patterns["name_prefix"].sub(replace_name, text)
+    
+    def redact_addresses(self, text: str) -> str:
+        """Redact addresses and ZIP codes from text."""
+        def replace_address(match):
+            return self._generate_mask("location", match.group(0))
+        
+        def replace_zip(match):
+            return self._generate_mask("location", match.group(0))
+        
+        text = self.patterns["address"].sub(replace_address, text)
+        text = self.patterns["zip"].sub(replace_zip, text)
+        return text
+    
+    def redact_locations(self, text: str) -> str:
+        """Redact specific location references."""
+        def replace_location(match):
+            prefix = match.group(0).split(match.group(1))[0]
+            return f"{prefix}{self._generate_mask('location', match.group(1))}"
+        
+        return self.patterns["location"].sub(replace_location, text)
+    
+    def redact_all(self, text: str) -> Tuple[str, Dict[str, int]]:
+        """
+        Apply all PHI redaction rules to text.
+        
+        Args:
+            text: Input text to redact
+            
+        Returns:
+            Tuple of (redacted_text, redaction_stats)
+        """
+        if not text or not isinstance(text, str):
+            return "", {}
+        
+        original_text = text
+        
+        # Apply redactions in order
+        text = self.redact_dates(text)
+        text = self.redact_ages_over_89(text)
+        text = self.redact_phone_numbers(text)
+        text = self.redact_emails(text)
+        text = self.redact_identifiers(text)
+        text = self.redact_names(text)
+        text = self.redact_addresses(text)
+        text = self.redact_locations(text)
+        
+        # Calculate redaction statistics
+        stats = {
+            "original_length": len(original_text),
+            "redacted_length": len(text),
+            "chars_redacted": len(original_text) - len(text) + sum(
+                len(text) - len(text.replace(f"[{cat.upper()}]", ""))
+                for cat in self.entity_counters.keys()
+            ),
+        }
+        
+        return text, stats
+    
+    def reset_counters(self):
+        """Reset entity counters for generic masking."""
+        for key in self.entity_counters:
+            self.entity_counters[key] = 0
+
+
+if __name__ == "__main__":
+    # Test the redactor
+    redactor = PHIRedactor(mask_style="category")
+    
+    test_texts = [
+        "Patient John Doe, MRN 123456, was seen on 03/15/2024.",
+        "Contact at 555-123-4567 or john.doe@email.com for follow-up.",
+        "92-year-old female lives in Springfield with history of diabetes.",
+    ]
+    
+    print("PHI Redactor Test:")
+    print("-" * 60)
+    for text in test_texts:
+        redacted, stats = redactor.redact_all(text)
+        print(f"Original:  {text}")
+        print(f"Redacted:  {redacted}")
+        print(f"Stats:     {stats}")
+        print()

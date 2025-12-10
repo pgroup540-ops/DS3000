@@ -1,0 +1,11 @@
+# Data Processing and Analysis
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Text Processing
+# No additional dependencies - using standard library (re, difflib, unicodedata)
+
+# For future enhancements (optional):
+# spacy>=3.5.0  # For advanced NER and medical entity recognition
+# scispacy>=0.5.0  # Medical/scientific NER models
+# transformers>=4.30.0  # For transformer-based augmentation

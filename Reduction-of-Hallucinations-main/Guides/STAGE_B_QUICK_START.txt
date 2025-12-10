@@ -1,0 +1,248 @@
+STAGE B (DPO) - QUICK START REFERENCE
+=====================================
+
+FILES CREATED:
+✓ dpo_dataset.py              - Triplet data loading
+✓ stage_b_dpo_training.py     - Main DPO training with dual models
+✓ STAGE_B_DPO_GUIDE.md        - Comprehensive documentation
+
+60-SECOND SETUP:
+================
+
+1. Prepare DPO data (JSONL format):
+   Create phase2_data/dpo/train_dpo.jsonl with triplets:
+   {"prompt": "...", "chosen": "factual", "rejected": "hallucinated"}
+
+2. Run training (2 epochs, ~2-4 hours on GPU):
+   python stage_b_dpo_training.py \
+       --sft_model_path "./models/sft_specialist/final_model" \
+       --num_epochs 2 \
+       --learning_rate 5e-6
+
+3. Evaluate:
+   Compare outputs from SFT vs DPO model
+
+KEY PARAMETERS (VERY DIFFERENT FROM SFT):
+==========================================
+
+learning_rate    = 5e-6       (100x LOWER than SFT!)
+beta             = 0.1        (KL divergence penalty strength)
+batch_size       = 4          (Smaller due to dual model)
+num_epochs       = 2          (1-3 recommended)
+
+⚠️ CRITICAL: DPO learning rates are 100x lower than SFT!
+    1e-6 = Conservative
+    5e-6 = Standard (RECOMMENDED)
+    1e-5 = Aggressive (risky)
+    > 1e-5 = NOT RECOMMENDED
+
+WHY DIFFERENT FROM SFT?
+=======================
+
+SFT (Stage A):
+- Single model
+- Learning rate: 2e-4
+- Goal: Teach medical knowledge
+
+DPO (Stage B):
+- TWO models (reference + active)
+- Learning rate: 5e-6 (100x lower!)
+- Goal: Teach preference for truth
+- High LR → model collapse
+
+THE TWO MODELS:
+===============
+
+Reference Model (FROZEN):
+- Loaded from Stage A checkpoint
+- Weights NEVER change
+- Used as baseline for KL penalty
+- Prevents active model drift
+
+Active Model (TRAINABLE):
+- Also from Stage A checkpoint
+- Weights CHANGE during training
+- Learning to prefer chosen responses
+- Has LoRA adapters
+
+DPO LOSS EXPLAINED:
+===================
+
+DPO Loss = -log(sigmoid(β * log_odds_ratio))
+
+Where:
+  log_odds_ratio = 
+    (log_p_model_chosen - log_p_model_rejected) - 
+    (log_p_ref_chosen - log_p_ref_rejected)
+
+This encourages:
+1. Model to prefer chosen (factual) response
+2. Model to avoid rejected (hallucinated) response
+3. Model to stay close to reference model (KL penalty)
+
+Expected Metric - "Chosen Preference":
+Should increase: 50% → 60% → 70% → 80%+
+
+TRAINING DATA FORMAT:
+====================
+
+File: phase2_data/dpo/train_dpo.jsonl
+
+Each line is JSON:
+{
+  "prompt": "Clinical Note: Patient has fever.\n\nSummary:",
+  "chosen": "Patient experienced fever.",
+  "rejected": "Patient recovered completely without symptoms."
+}
+
+Key points:
+- chosen = FACTUAL summary
+- rejected = HALLUCINATED (hard negative) summary
+- Hard negatives should be VERY SIMILAR to truth but wrong on 1 key detail
+
+COMMAND VARIANTS:
+=================
+
+STANDARD (RECOMMENDED):
+python stage_b_dpo_training.py \
+    --learning_rate 5e-6 \
+    --beta 0.1 \
+    --batch_size 4
+
+CONSERVATIVE (First attempt):
+python stage_b_dpo_training.py \
+    --learning_rate 1e-6 \
+    --beta 0.1 \
+    --batch_size 4
+
+AGGRESSIVE (Limited resources):
+python stage_b_dpo_training.py \
+    --learning_rate 5e-6 \
+    --batch_size 2 \
+    --lora_r 8
+
+EXPECTED OUTPUT:
+================
+
+Epoch 1/2:
+============================================================
+Train Loss: 0.68
+Val Loss: 0.65
+Chosen Preference: 55%
+
+Epoch 2/2:
+============================================================
+Train Loss: 0.45
+Val Loss: 0.42
+Chosen Preference: 78%
+
+DPO Training completed!
+Model saved to ./models/dpo_hallucination_resistant/final_model
+
+HARDWARE REQUIREMENTS:
+=====================
+
+GPU Memory Needed (batch_size=4):
+- A100 (40GB) ✓
+- V100 (32GB) ✓
+- RTX 3090 (24GB) ✓
+- RTX 4090 (24GB) ✓
+- M1/M2 Mac (16GB) - Very slow, reduce batch_size to 1
+
+Training Time per Epoch:
+- A100: 30-50 min
+- V100: 60-90 min
+- RTX 3090: 90-120 min
+- M1/M2 Mac: 6-10 hours
+
+TROUBLESHOOTING:
+================
+
+"CUDA out of memory" → Reduce batch_size to 2 or 1
+
+Chosen Preference not increasing → 
+  Try: --learning_rate 1e-6 or --beta 0.5
+
+Model generates gibberish →
+  Increase beta: --beta 1.0
+  Or reduce LR: --learning_rate 1e-7
+
+METRICS EXPLAINED:
+==================
+
+Loss:
+- Should DECREASE smoothly (like SFT)
+- Epoch 1: 0.68 → Epoch 2: 0.45 (good)
+- Epoch 1: 0.68 → Epoch 2: 0.68 (underfitting)
+
+Chosen Preference:
+- Percentage where model prefers chosen over rejected
+- 50% = Random (no learning)
+- 60-70% = Early learning
+- 80%+ = Strong learning
+- 95%+ = May be overfitting
+
+OUTPUT STRUCTURE:
+=================
+
+./models/dpo_hallucination_resistant/
+├── final_model/              ← USE THIS
+│   ├── adapter_config.json
+│   ├── adapter_model.bin
+│   ├── tokenizer.json
+│   └── dpo_config.json
+├── checkpoint_epoch_1/
+├── checkpoint_epoch_2/
+└── dpo_training_stats.json
+
+NEXT STEPS AFTER DPO:
+====================
+
+1. Evaluate on test set
+   - Compare SFT (Stage A) vs DPO (Stage B) outputs
+   - Measure hallucination reduction
+   - Target: 30-40% hallucs → 5-15% hallucs
+
+2. Merge LoRA weights (optional)
+   - Reduces model to single file
+   - Useful for deployment
+
+3. Quantization (optional)
+   - 8-bit or 4-bit quantization
+   - Reduces model size 4x-8x
+
+WHEN TO MOVE TO PRODUCTION:
+===========================
+
+✓ Training loss converges
+✓ Chosen preference reaches 80%+
+✓ Validation loss follows training loss
+✓ Qualitative evaluation shows reduced hallucinations
+✓ No gibberish output
+
+KEY DIFFERENCES: SFT vs DPO
+===========================
+
+                SFT        DPO
+Learning Rate   2e-4       5e-6 (100x lower!)
+Models          1          2 (reference + active)
+Goal            Knowledge  Preference
+Batch Size      8          4
+GPU Memory      20GB        32GB
+Key Metric      Loss       Chosen Preference
+Epochs          2          2
+
+DPO IS NOT HARDER, JUST DIFFERENT:
+==================================
+
+- Learning rate is MUCH lower
+- Batch size is SMALLER
+- GPU memory usage is HIGHER
+- Everything else is similar!
+
+LINKS:
+======
+
+Full Guide: STAGE_B_DPO_GUIDE.md
+DPO Paper: https://arxiv.org/abs/2305.18290
+

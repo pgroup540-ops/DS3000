@@ -1,0 +1,161 @@
+STAGE A (SFT) - FILES INDEX
+===========================
+
+PYTHON SCRIPTS (3 files):
+========================
+
+1. sft_dataset.py (6.7 KB)
+   - SFTDataset class: PyTorch Dataset for loading training data
+   - SFTDataCollator: Custom batch collation
+   - create_sft_dataloaders(): Factory function
+   - Converts CSV pairs into tokenized prompt-response sequences
+   - Usage: python sft_dataset.py (to test dataset loading)
+
+2. stage_a_sft_training.py (15 KB)
+   - SFTConfig: Hyperparameter configuration
+   - SFTTrainer: Main training class with LoRA integration
+   - Full training loop with validation
+   - Checkpoint saving and logging
+   - Usage: python stage_a_sft_training.py --num_epochs 2 --learning_rate 2e-4
+
+3. sft_inference.py (8.6 KB)
+   - SFTInference: Model loading and generation wrapper
+   - Single inference, batch processing, interactive modes
+   - Generation parameters control
+   - Usage: python sft_inference.py --model_path ./models/sft_specialist/final_model --clinical_note "..."
+
+CONFIGURATION (1 file):
+======================
+
+4. requirements_training.txt (624 B)
+   - All dependencies for training
+   - Install: pip install -r requirements_training.txt
+   - Includes: torch, transformers, peft, accelerate, tqdm, bitsandbytes
+
+DOCUMENTATION (4 files):
+=======================
+
+5. STAGE_A_README.md (5.7 KB)
+   - Overview of Stage A implementation
+   - Quick start guide
+   - Key parameters table
+   - Troubleshooting tips
+   - Next steps to Stage B
+   - START HERE for quick overview
+
+6. STAGE_A_SFT_GUIDE.md (12 KB)
+   - Comprehensive 433-line guide
+   - Installation & setup details
+   - Technical specifications (LR, epochs, LoRA)
+   - Training data format
+   - All configuration options
+   - Hyperparameter tuning guide
+   - Expected loss curves
+   - Advanced topics
+   - USE THIS for detailed reference
+
+7. STAGE_A_QUICK_START.txt (4.6 KB)
+   - Quick reference card format
+   - 60-second setup
+   - Common commands
+   - Hardware performance specs
+   - When to move to Stage B
+   - USE THIS for quick lookup
+
+8. STAGE_A_IMPLEMENTATION_SUMMARY.md (13 KB)
+   - Technical implementation details
+   - File descriptions
+   - Training pipeline diagram
+   - Key concepts explained
+   - Performance expectations
+   - Files and functions reference
+   - USE THIS for deep understanding
+
+QUICK START COMMANDS:
+====================
+
+1. Install dependencies:
+   pip install -r requirements_training.txt
+
+2. Run training (2 epochs, ~1-2 hours on GPU):
+   python stage_a_sft_training.py \
+       --model_name "meta-llama/Llama-2-7b-hf" \
+       --num_epochs 2 \
+       --learning_rate 2e-4
+
+3. Test inference:
+   python sft_inference.py \
+       --model_path ./models/sft_specialist/final_model \
+       --clinical_note "Patient has fever and cough."
+
+KEY PARAMETERS:
+===============
+
+num_epochs       = 2         (1-3 recommended)
+learning_rate    = 2e-4      (standard LoRA)
+batch_size       = 8         (reduce if CUDA OOM)
+lora_r           = 16        (increase to 32 if underfitting)
+max_length       = 512       (token limit)
+
+FILE SIZES:
+===========
+
+Python Scripts:  ~30 KB total
+Requirements:    <1 KB
+Documentation:   ~35 KB total
+TOTAL:           ~65 KB
+
+TRAINING OUTPUT:
+================
+
+Model will be saved to: ./models/sft_specialist/final_model/
+
+Contains:
+- adapter_config.json     (LoRA configuration)
+- adapter_model.bin       (Trained LoRA weights)
+- tokenizer.json          (Tokenizer)
+- sft_config.json         (Training config)
+
+DOCUMENTATION ROADMAP:
+======================
+
+For Quick Overview:
+   → STAGE_A_README.md (5 min read)
+
+For Quick Lookup:
+   → STAGE_A_QUICK_START.txt (2 min read)
+
+For Detailed Reference:
+   → STAGE_A_SFT_GUIDE.md (20 min read)
+
+For Technical Deep Dive:
+   → STAGE_A_IMPLEMENTATION_SUMMARY.md (15 min read)
+
+For Code Examples:
+   → Look at docstrings in:
+      - sft_dataset.py
+      - stage_a_sft_training.py
+      - sft_inference.py
+
+NEXT STEPS:
+===========
+
+1. Install requirements: pip install -r requirements_training.txt
+2. Run training: python stage_a_sft_training.py --num_epochs 2
+3. Test inference: python sft_inference.py --model_path ... --clinical_note "..."
+4. Evaluate model quality
+5. Prepare for Stage B: Direct Preference Optimization (DPO)
+
+SUPPORT:
+========
+
+For issues:
+1. Check STAGE_A_SFT_GUIDE.md "Troubleshooting" section
+2. Check dataset format in STAGE_A_README.md
+3. Verify phase1_data/sft/train_set_processed.csv exists
+4. Try with --device cpu if CUDA errors
+
+For questions:
+- Refer to hyperparameter tuning tables in STAGE_A_SFT_GUIDE.md
+- Check performance benchmarks in STAGE_A_QUICK_START.txt
+- Review key concepts in STAGE_A_IMPLEMENTATION_SUMMARY.md

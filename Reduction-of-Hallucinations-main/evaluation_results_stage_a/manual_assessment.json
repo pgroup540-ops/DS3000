@@ -1,0 +1,66 @@
+{
+  "total_assessed": 10,
+  "timestamp": "2025-11-23T16:38:05.360665",
+  "assessments": [
+    {
+      "example_id": 0,
+      "has_hallucination": false,
+      "hallucination_type": null,
+      "timestamp": "2025-11-23T16:33:17.120381"
+    },
+    {
+      "example_id": 1,
+      "has_hallucination": true,
+      "hallucination_type": "unsupported_details",
+      "timestamp": "2025-11-23T16:33:57.730817"
+    },
+    {
+      "example_id": 2,
+      "has_hallucination": true,
+      "hallucination_type": "unsupported_details",
+      "timestamp": "2025-11-23T16:35:16.935517"
+    },
+    {
+      "example_id": 3,
+      "has_hallucination": false,
+      "hallucination_type": null,
+      "timestamp": "2025-11-23T16:35:24.026968"
+    },
+    {
+      "example_id": 4,
+      "has_hallucination": true,
+      "hallucination_type": "unsupported_details",
+      "timestamp": "2025-11-23T16:35:47.134394"
+    },
+    {
+      "example_id": 5,
+      "has_hallucination": false,
+      "hallucination_type": null,
+      "timestamp": "2025-11-23T16:35:54.597027"
+    },
+    {
+      "example_id": 6,
+      "has_hallucination": true,
+      "hallucination_type": "fabricated",
+      "timestamp": "2025-11-23T16:36:33.299037"
+    },
+    {
+      "example_id": 7,
+      "has_hallucination": true,
+      "hallucination_type": "incorrect_inference",
+      "timestamp": "2025-11-23T16:37:07.032785"
+    },
+    {
+      "example_id": 8,
+      "has_hallucination": true,
+      "hallucination_type": "contradiction",
+      "timestamp": "2025-11-23T16:37:54.506004"
+    },
+    {
+      "example_id": 9,
+      "has_hallucination": false,
+      "hallucination_type": null,
+      "timestamp": "2025-11-23T16:38:05.360665"
+    }
+  ]
+}

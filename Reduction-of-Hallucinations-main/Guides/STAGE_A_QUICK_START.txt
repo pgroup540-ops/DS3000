@@ -1,0 +1,158 @@
+STAGE A SFT - QUICK START REFERENCE
+===================================
+
+FILES CREATED:
+✓ sft_dataset.py              - Data loading & preprocessing
+✓ stage_a_sft_training.py     - Main training script with LoRA
+✓ sft_inference.py            - Model inference & generation
+✓ requirements_training.txt   - Dependencies
+✓ STAGE_A_SFT_GUIDE.md        - Complete documentation
+
+60-SECOND SETUP:
+================
+
+1. Install dependencies:
+   pip install -r requirements_training.txt
+
+2. Run training (2 epochs, ~1-2 hours on GPU):
+   python stage_a_sft_training.py \
+       --model_name "meta-llama/Llama-2-7b-hf" \
+       --num_epochs 2 \
+       --learning_rate 2e-4
+
+3. Test inference:
+   python sft_inference.py \
+       --model_path ./models/sft_specialist/final_model \
+       --clinical_note "Patient has fever and cough. Tested positive for influenza."
+
+KEY PARAMETERS:
+===============
+
+num_epochs       = 2         | Training passes (1-3 recommended)
+learning_rate    = 2e-4      | Update step size (standard LoRA)
+batch_size       = 8         | Examples per update (reduce if OOM)
+lora_r           = 16        | Adapter capacity (32 if underfitting)
+max_length       = 512       | Token limit per example
+
+EXPECTED TRAINING OUTPUT:
+=========================
+
+Epoch 1/2: Train Loss 2.14, Val Loss 2.09
+Epoch 2/2: Train Loss 1.82, Val Loss 1.80
+Training completed!
+Saved to ./models/sft_specialist/final_model
+
+TROUBLESHOOTING:
+================
+
+CUDA out of memory?
+→ python stage_a_sft_training.py --batch_size 4 --lora_r 8
+
+Loss not decreasing?
+→ python stage_a_sft_training.py --num_epochs 3 --lora_r 32
+
+Model won't load for inference?
+→ python sft_inference.py --model_path ... --device cpu
+
+TRAINING DATA FORMAT:
+====================
+
+Input CSV: phase1_data/sft/train_set_processed.csv
+
+id,clinical_note,model_summary,label,hallucination_type
+1,Patient had fever. Tested positive for influenza A.,The patient tested positive for influenza A.,factual,
+2,Patient recovering from COVID-19. No respiratory distress.,The patient is recovering from COVID-19.,factual,
+
+→ Only rows with label='factual' are used for training
+
+OUTPUT STRUCTURE:
+=================
+
+models/sft_specialist/
+├── final_model/                  ← Use this for inference
+│   ├── adapter_config.json      # LoRA configuration
+│   ├── adapter_model.bin        # Trained weights
+│   └── tokenizer.json
+├── checkpoint_epoch_1/          # Intermediate saves
+├── checkpoint_epoch_2/
+└── training_stats.json          # Loss metrics
+
+HARDWARE PERFORMANCE:
+====================
+
+A100 GPU    | 32 batch | 10-15 min/epoch | 40GB
+V100 GPU    | 8 batch  | 20-30 min/epoch | 32GB
+A10 GPU     | 4 batch  | 30-45 min/epoch | 24GB
+M1/M2 Mac   | 2 batch  | 60-90 min/epoch | 16GB
+
+COMMAND VARIANTS:
+================
+
+TRAINING:
+# Fast (1 epoch)
+python stage_a_sft_training.py --num_epochs 1 --batch_size 16
+
+# Standard (2 epochs, recommended)
+python stage_a_sft_training.py --num_epochs 2 --batch_size 8
+
+# Thorough (3 epochs, large model)
+python stage_a_sft_training.py --num_epochs 3 --lora_r 32 --batch_size 4
+
+# Memory-efficient (Mac/CPU)
+python stage_a_sft_training.py --batch_size 2 --lora_r 8 --device cpu
+
+INFERENCE:
+# Single example
+python sft_inference.py --model_path ... --clinical_note "..."
+
+# Batch from file
+python sft_inference.py --model_path ... --input_file notes.txt
+
+# Interactive
+python sft_inference.py --model_path ...
+
+ALTERNATIVE BASE MODELS:
+========================
+
+# Llama-3 (8B)
+python stage_a_sft_training.py --model_name "meta-llama/Meta-Llama-3-8B"
+
+# Mistral (7B, faster)
+python stage_a_sft_training.py --model_name "mistralai/Mistral-7B"
+
+# Smaller model (faster training)
+python stage_a_sft_training.py --model_name "meta-llama/Llama-2-7b" --lora_r 8
+
+KEY STATISTICS:
+===============
+
+Total training examples:  ~50-100 factual pairs
+Validation examples:      ~10-20
+Total parameters:         7B (for Llama-2-7b)
+Trainable parameters:     ~0.3B (with LoRA r=16)
+Training time:            1-3 hours (GPU) / 3-6 hours (CPU)
+
+WHEN TO MOVE TO STAGE B:
+=======================
+
+✓ Training loss converges (decreases smoothly)
+✓ Model generates coherent medical text
+✓ Output format matches your templates
+✓ No obvious hallucinations yet
+
+→ Then proceed to Stage B: Direct Preference Optimization (DPO)
+
+NEXT STEPS:
+===========
+
+1. After training → model saved to ./models/sft_specialist/final_model
+2. Test inference to verify medical expertise
+3. Evaluate on held-out test set
+4. Prepare for Stage B: DPO (hard negatives)
+
+LINKS:
+======
+
+Full Guide: STAGE_A_SFT_GUIDE.md
+LoRA Paper: https://arxiv.org/abs/2106.09714
+PEFT Docs: https://huggingface.co/docs/peft
